@@ -22,6 +22,7 @@ import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
 from IPython.display import Image, display
+from google.colab.patches import cv2_imshow
 
 import cv2
 import torchvision.transforms as transforms
@@ -147,7 +148,7 @@ if __name__ == "__main__":
             dim=(416,416)
             image = detect(cv2.resize(image, dim))
             result.write(cv2.resize(image,(800,800)))
-            cv2.imshow("display",cv2.resize(image,(800,800)))
+            cv2_imshow(cv2.resize(image,(800,800)))
             current_time = time.time()
             fps=1/(current_time-prev_time)
             inference_time = datetime.timedelta(seconds=current_time - prev_time)
