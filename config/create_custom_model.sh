@@ -1,5 +1,5 @@
 #!/bin/bash
-
+rm yolov3-custom.cfg
 NUM_CLASSES=$1
 
 echo "
