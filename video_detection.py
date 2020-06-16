@@ -21,10 +21,14 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
+from IPython.display import Image, display
+
 import cv2
 import torchvision.transforms as transforms
 
-color=[(255,0,0),(0,0,255),(0,0,0),(0,255,0),(0,0,0),(145,56,76),(55,25,91),(174,200,110)]
+result = cv2.VideoWriter('output.avi',
+                         cv2.VideoWriter_fourcc(*'MJPG'),
+                         10, (400,400))
 
 def detect(img):
     print(img.shape)
@@ -39,10 +43,20 @@ def detect(img):
 
     frm=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     print(frm.shape)
+    # Bounding-box colors
+    cmap = plt.get_cmap("tab20b")
+    colors = [cmap(i) for i in np.linspace(0, 1, 20)]
+
+    # Create plot
+    plt.figure()
+    fig, ax = plt.subplots(1)
+    ## ax.imshow(img)
+
     if torch.is_tensor(detections[0]):
         detections = rescale_boxes(detections[0], opt.img_size, img.shape[:2])
         unique_labels = detections[:, -1].cpu().unique()
         n_cls_preds = len(unique_labels)
+        bbox_colors = random.sample(colors, n_cls_preds)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
             print("predicted class number")
             print(int(cls_pred))
@@ -50,13 +64,38 @@ def detect(img):
             #    continue
             print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
             #!cls_pred=cls_pred%8
-            cv2.line(frm,(x1,y1),(x2,y1),color[int(cls_pred)],2)
-            cv2.line(frm,(x2,y1),(x2,y2),color[int(cls_pred)],2)
-            cv2.line(frm,(x2,y2),(x1,y2),color[int(cls_pred)],2)
-            cv2.line(frm,(x1,y2),(x1,y1),color[int(cls_pred)],2)
-            cv2.putText(frm,classes[int(cls_pred)],(x1-5,y1-5),cv2.FONT_HERSHEY_SIMPLEX,1,color[int(cls_pred)],2,cv2.LINE_AA)
+            box_w = x2 - x1
+            box_h = y2 - y1
 
-    # cv2.imshow("functoan",frm)
+            color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
+            # Create a Rectangle patch
+            bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none")
+            # Add the bbox to the plot
+            ax.add_patch(bbox)
+            # Add label
+            plt.text(
+                x1,
+                y1,
+                s=classes[int(cls_pred)],
+                color="white",
+                verticalalignment="top",
+                bbox={"color": color, "pad": 0},
+            )
+            cv2.line(frm, (x1, y1), (x2, y1), color[int(cls_pred)], 2)
+            cv2.line(frm, (x2, y1), (x2, y2), color[int(cls_pred)], 2)
+            cv2.line(frm, (x2, y2), (x1, y2), color[int(cls_pred)], 2)
+            cv2.line(frm, (x1, y2), (x1, y1), color[int(cls_pred)], 2)
+            cv2.putText(frm, classes[int(cls_pred)], (x1 - 5, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                        color[int(cls_pred)], 2, cv2.LINE_AA)
+            display(Image(frm))
+            result.write(frm)
+
+
+    plt.axis("off")
+    plt.gca().xaxis.set_major_locator(NullLocator())
+    plt.gca().yaxis.set_major_locator(NullLocator())
+    #plt.show(block =True)
+    #cv2.imshow("functoan",frm)
     return frm
     
 
@@ -107,7 +146,7 @@ if __name__ == "__main__":
             image=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             dim=(416,416)
             image = detect(cv2.resize(image, dim))
-            cv2.imshow("display",cv2.resize(image,(800,800)))
+            #cv2.imshow("display",cv2.resize(image,(800,800)))
             current_time = time.time()
             fps=1/(current_time-prev_time)
             inference_time = datetime.timedelta(seconds=current_time - prev_time)
@@ -121,8 +160,8 @@ if __name__ == "__main__":
         
     else:
         print("## INVALID PATH GIVEN ##")
-        
-    
+
+
     
     
     
