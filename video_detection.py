@@ -26,9 +26,7 @@ from IPython.display import Image, display
 import cv2
 import torchvision.transforms as transforms
 
-result = cv2.VideoWriter('output.avi',
-                         cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, (400,400))
+
 
 def detect(img):
     print(img.shape)
@@ -87,13 +85,10 @@ def detect(img):
             cv2.line(frm, (x1, y2), (x1, y1), color[int(cls_pred)], 2)
             cv2.putText(frm, classes[int(cls_pred)], (x1 - 5, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 1,
                         color[int(cls_pred)], 2, cv2.LINE_AA)
-            display(Image(frm))
-            result.write(frm)
 
-
-    plt.axis("off")
-    plt.gca().xaxis.set_major_locator(NullLocator())
-    plt.gca().yaxis.set_major_locator(NullLocator())
+    # plt.axis("off")
+    # plt.gca().xaxis.set_major_locator(NullLocator())
+    # plt.gca().yaxis.set_major_locator(NullLocator())
     #plt.show(block =True)
     #cv2.imshow("functoan",frm)
     return frm
@@ -112,8 +107,13 @@ if __name__ == "__main__":
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_model", type=str, help="path to checkpoint model")
+    parser.add_argument("--output_video", type=str, help="path to checkpoint model")
     opt = parser.parse_args()
     print(opt)
+
+    result = cv2.VideoWriter(opt.output_video,
+                             cv2.VideoWriter_fourcc(*'MJPG'),
+                             10, (800, 800))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -146,7 +146,8 @@ if __name__ == "__main__":
             image=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             dim=(416,416)
             image = detect(cv2.resize(image, dim))
-            #cv2.imshow("display",cv2.resize(image,(800,800)))
+            result.write(cv2.resize(image,(800,800)))
+            cv2.imshow("display",cv2.resize(image,(800,800)))
             current_time = time.time()
             fps=1/(current_time-prev_time)
             inference_time = datetime.timedelta(seconds=current_time - prev_time)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
     else:
         print("## INVALID PATH GIVEN ##")
 
-
+result.release()
     
     
     

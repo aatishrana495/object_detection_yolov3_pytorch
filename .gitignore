@@ -4,7 +4,6 @@ build
 .git
 *.egg-info
 dist
-output/*png
 backup
 logs/
 log_dir/
